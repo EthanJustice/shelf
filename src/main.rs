@@ -1,70 +1,56 @@
+#![feature(proc_macro_hygiene, decl_macro)]
+
 // std
 
-// external
-use clap::{App, Arg, SubCommand};
+// crates
+use rocket::{get, http::ContentType, response::content::Content, routes, *};
+use rocket_contrib::{json::Json, serve::StaticFiles, templates::Template};
 
 // local
-use shelf::Book;
+use shelf::{Book, Context, NoData};
+
+static NOT_FOUND: &'static str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/static/not_found.html"
+));
+
+#[catch(404)]
+fn not_found() -> Content<&'static str> {
+    Content(ContentType::HTML, NOT_FOUND)
+}
+
+#[get("/")]
+fn index() -> Template {
+    Template::render(
+        "index",
+        &Context {
+            title: "Index",
+            parent: "layout",
+            data: Some(NoData()),
+        },
+    )
+}
+
+#[post("/search")]
+fn return_search_results() //-> Json<>
+{
+}
+
+#[get("/edit")]
+fn edit() -> Template {
+    Template::render(
+        "edit",
+        &Context {
+            title: "Template",
+            parent: "layout",
+            data: Some(NoData()),
+        },
+    )
+}
 
 fn main() {
-    let app = App::new("shelf")
-        .about(env!("CARGO_PKG_DESCRIPTION"))
-        .author(env!("CARGO_PKG_AUTHORS"))
-        .subcommand(SubCommand::with_name("view").about("View and query books."))
-        .subcommand(
-            SubCommand::with_name("add")
-                .about("Add a new book")
-                .arg(
-                    Arg::with_name("title")
-                        .short("t")
-                        .help("The title of the book.")
-                        .required(true)
-                        .takes_value(true),
-                )
-                .arg(
-                    Arg::with_name("author")
-                        .short("a")
-                        .help("The book's author")
-                        .required(true)
-                        .takes_value(true),
-                )
-                .arg(
-                    Arg::with_name("genre")
-                        .short("g")
-                        .help("The book's primary genre")
-                        .required(false)
-                        .takes_value(true),
-                )
-                .arg(
-                    Arg::with_name("tags")
-                        .help("Apply custom categories to the book")
-                        .takes_value(true),
-                )
-                .arg(
-                    Arg::with_name("read")
-                        .short("r")
-                        .required(false)
-                        .help("Specifies if the book has been read")
-                        .takes_value(true)
-                        .possible_values(&["true", "false"])
-                        .default_value("false"),
-                )
-                .arg(
-                    Arg::with_name("copies")
-                        .short("c")
-                        .help("Specifies the number of copies of the book.")
-                        .takes_value(true)
-                        .required(false)
-                        .default_value("1"),
-                ),
-        )
-        .subcommand(SubCommand::with_name("remove").about("Remove a book"))
-        .get_matches();
-
-    if let Some(_subcommand) = app.subcommand_matches("view") {
-        // ...
-    } else if let Some(_subcommand) = app.subcommand_matches("add") {
-    } else if let Some(_subcommand) = app.subcommand_matches("remove") {
-    } else {
-    }
+    rocket::ignite()
+        .register(catchers![not_found])
+        .mount("/", routes![index, return_search_results, edit])
+        .launch();
 }

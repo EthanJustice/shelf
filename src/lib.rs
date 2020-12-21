@@ -1,7 +1,19 @@
 // std
 
-// external
+// crates
 use serde::Serialize;
+
+// local
+
+#[derive(Serialize)]
+pub struct NoData();
+
+#[derive(Serialize)]
+pub struct Context<T: Serialize, S: Into<String>> {
+    pub title: S,
+    pub parent: &'static str,
+    pub data: std::option::Option<T>,
+}
 
 #[derive(Serialize)]
 pub struct Book {

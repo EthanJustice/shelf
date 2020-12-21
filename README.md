@@ -1,3 +1,3 @@
 # shelf
 
-cli tool for managing books
+tool for managing books
